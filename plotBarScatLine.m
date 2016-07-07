@@ -29,7 +29,8 @@ function lbl = plotBarScatLine(data,lbl,sets)
 %  - sets.colorScatter (format [0 0 0] , sets color of scatterpoints)
 %  - sets.colorSpec (set your own colors using {[0 0 0;0 0 0],[0 0 0;0 0 0]} for each
 %  colum a triplit on a new line, for each session a new cell. 
-
+%
+% Annelies van Nuland - 07/07/2016
 %% basic setup
 % Set baseline variables if not given
 if ~any(strcmp('lines',fieldnames(sets)))
@@ -50,11 +51,11 @@ if ~any(strcmp('colorSpec',fieldnames(sets)))
     colorOptions = colormap('lines');
     if nrSess>1
         for iSess = 1:nrSess
-            sets.colorScatter{iSess} = repmat(colorOptions(iSess,:),nrCond,1);
+            sets.colorSpec{iSess} = repmat(colorOptions(iSess,:),nrCond,1);
         end
     else
         for iCond = 1:nrCond
-            sets.colorScatter{1}(iCond,:) = colorOptions(iCond,:);
+            sets.colorSpec{1}(iCond,:) = colorOptions(iCond,:);
         end
     end
 end
@@ -138,4 +139,8 @@ if any(strcmp('legend',fieldnames(lbl.setText)))
     end
 end
 
+end
+
+function randX = jitterRandX(X,meanX,width)
+    randX = (rand(size(X))-0.5)*2*width+meanX;
 end
