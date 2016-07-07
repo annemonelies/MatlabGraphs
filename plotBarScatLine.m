@@ -1,6 +1,20 @@
-function lbl = plotBarsPerfect(data,lbl,sets)
-% data, sessions in different cells, conditions in different columns.
+function lbl = plotBarScatLine(data,lbl,sets)
+% function lbl = plotBarScatLine(data,lbl,sets) 
+% Creates plot which include (groups of) bars, the induvidual data points
+% which are scattered with a slight jitter (relative to bar-thickness)
+% and can include lines between jitter-points if specified. 
+% 
+% You input your data in the following organisation:
+% Within one 'group' of bars, conditions are put into colums whith on each 
+% line the induvidual trials. Separate groups of bars are put into 
+% different cells.
 %
+% (cell) (cell)
+% group  group
+% || ||  || || 
+% c1 c2  c1 c2
+%
+% Further required and optional input
 % required lbl input:
 %  - lbl.setText.titleText
 %  - lbl.setText.xLabels (name xType for each colum)
