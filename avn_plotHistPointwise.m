@@ -1,5 +1,6 @@
-function yIx = plotPointwiseHist(inputData,lbl,par)
+function yIx = avn_plotHistPointwise(inputData,lbl,par)
 %function plotSmoothedHist(inputData,lbl,par)
+%TODO: reinstate proper label making (through lbl)
 % --cc Annelies van Nuland 19-11-2016
 
 %% setup data

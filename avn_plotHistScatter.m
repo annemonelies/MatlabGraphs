@@ -1,4 +1,4 @@
-function avn_plotScatterhist(inputData,lbl,par)
+function avn_plotHistScatter(inputData,lbl,par)
 %function plotSmoothedHist(inputData,lbl,par)
 % --cc Annelies van Nuland 19-11-2016
 

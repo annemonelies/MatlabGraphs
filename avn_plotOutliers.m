@@ -1,4 +1,4 @@
-function [outliersRemoved,outlier,lbl] = plotOutliers(inputData,lbl)
+function [outliersRemoved,outlier,lbl] = avn_plotOutliers(inputData,lbl)
 %function [outliersRemoved,lbl] = plotOutliers(inputData,lbl)
 % Creates plot that visualises (and removes) the outliers of a given vector
 % according to the presumption that an outliers is SD>3.

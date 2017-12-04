@@ -1,4 +1,4 @@
-function myCorrplot(data,labelNames,titleName)
+function avn_plotCorrelate(data,labelNames,titleName)
 % function myCorrplot(data,labelNames,titleName)
 % input 
 % data = matrix, has columns with different vectors of interest
