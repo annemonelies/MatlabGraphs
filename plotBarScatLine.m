@@ -1,17 +1,17 @@
-function lbl = plotBarScatLine(data,lbl,sets)
-% function lbl = plotBarScatLine(data,lbl,sets) 
+function [lbl, h1] = plotBarScatLine(inData,lbl,sets)
+% function lbl = plotBarScatLine(data,lbl,sets)
 % Creates plot which include (groups of) bars, the induvidual data points
 % which are scattered with a slight jitter (relative to bar-thickness)
-% and can include lines between jitter-points if specified. 
-% 
+% and can include lines between jitter-points if specified.
+%
 % You input your data in the following organisation:
-% Within one 'group' of bars, conditions are put into colums whith on each 
-% line the induvidual trials. Separate groups of bars are put into 
+% Within one 'group' of bars, conditions are put into colums whith on each
+% line the induvidual trials. Separate groups of bars are put into
 % different cells.
 %
 % (cell) (cell)
 % group  group
-% || ||  || || 
+% || ||  || ||
 % c1 c2  c1 c2
 %
 % Further required and optional input
@@ -20,19 +20,28 @@ function lbl = plotBarScatLine(data,lbl,sets)
 %  - lbl.setText.xLabels (name xType for each colum)
 %  - lbl.setText.hYLabel
 % optional lbl input:
-%  - lbl.setText.yAxis (limit the yAxis, use standard [y,y] config)
-%  - lbl.setText.legend (introduce legend, by specifying legendNames) 
+%  - lbl.yAxis (limit the yAxis, use standard [y,y] config)
+%  - lbl.setText.legend (introduce legend, by specifying legendNames)
 %  - lbl.legendLocation (mark location by standard use, e.g. 'northeast')
 %
-% optinal sets input: 
+% optinal sets input:
 %  - sets.lines (True/False(=default), lines between scatterpoints in colums)
 %  - sets.colorScatter (format [0 0 0] , sets color of scatterpoints)
 %  - sets.colorSpec (set your own colors using {[0 0 0;0 0 0],[0 0 0;0 0 0]} for each
-%  colum a triplit on a new line, for each session a new cell. 
-%
+%  colum a triplit on a new line, for each session a new cell.
+% % Note: Remove spm from path because of conflict with nanvar and nanmean
 % Annelies van Nuland - 07/07/2016
+
 %% basic setup
 % Set baseline variables if not given
+sets.random = 1;
+lbl.random = 1;
+lbl.setText.random = 1;
+
+if ~any(strcmp('titleText',fieldnames(lbl.setText)))
+   lbl.setText.titleText = 'title';
+end
+
 if ~any(strcmp('lines',fieldnames(sets)))
     sets.lines=false;
 end
@@ -41,9 +50,17 @@ if ~any(strcmp('colorScatter',fieldnames(sets)))
     sets.colorScatter = [0.6,0.6,0.6];
 end
 
+if ~iscell(inData);
+    data{1} = inData;
+else
+    data = inData;
+end
+
 % determine size dataset
 nrSess = size(data,2);
-nrCond = size(data{1},2);
+for iSess = 1:nrSess 
+    nrCondperSess(iSess) = size(data{iSess},2);
+end
 nrSub = size(data{1},1);
 
 % prepare some default colorscheme in the right format
@@ -51,6 +68,7 @@ if ~any(strcmp('colorSpec',fieldnames(sets)))
     colorOptions = colormap('lines');
     if nrSess>1
         for iSess = 1:nrSess
+            nrCond = nrCondperSess(iSess);
             sets.colorSpec{iSess} = repmat(colorOptions(iSess,:),nrCond,1);
         end
     else
@@ -60,7 +78,10 @@ if ~any(strcmp('colorSpec',fieldnames(sets)))
     end
 end
 
+
+for iSess = 1:nrSess
 % calculate spacing (x-position bars, width of bars)
+nrCond = nrCondperSess(iSess);
 u = 1/(1+nrCond*4);
 xPos = [];
 x = -0.5;
@@ -72,47 +93,92 @@ for iCond = 1:nrCond
     end
     xPos(iCond) = x;
 end
-width = u*3;
+allXpos{iSess} = xPos;
+allU(iSess) = u;
+end
+uMin = min(allU);
+width = uMin*3;
+
 
 % Nr the xlocations of the plot
 xTickSpots = [];
 for iSess = 1:nrSess
-    xTickSpots = [xTickSpots,[xPos+repmat(iSess,1,nrCond)]];
+    thisCond = size(data{iSess},2);
+    xPos = allXpos{iSess};
+    xTickSpots = [xTickSpots,[xPos(1:thisCond)+repmat(iSess,1,thisCond)]];
 end
 
 % calculate mean and sem
-for iSess = 1:nrSess
-    meanData{iSess} = nanmean(data{iSess});
-    semData{iSess} =nanstd(data{iSess},[],1)/sqrt(nrSub);
+if nrSub>1
+    for iSess = 1:nrSess
+        meanData{iSess} = nanmean(data{iSess});
+        snrCond = size(data{iSess},2);
+        for iCond = 1:snrCond
+            notNan = data{iSess}(~isnan(data{iSess}(:,iCond)),iCond);
+            semData{iSess}(:,iCond) =std(notNan)./sqrt(numel(notNan));
+        end
+    end
+else
+    meanData{iSess} = data{iSess};
+    if any(strcmp('manualSEM',fieldnames(sets)))
+        semData{iSess} = sets.manualSEM{iSess};
+    end
+end
+
+if ~any(strcmp('xLabels',fieldnames(lbl.setText)))
+    lbl.setText.xLabels = [1:nrSess];
+end
+
+if ~any(strcmp('hYLabel',fieldnames(lbl.setText)))
+    lbl.setText.hYLabel = '';
+end
+
+if ~any(strcmp('hXLabel',fieldnames(lbl.setText)))
+    lbl.setText.hXLabel = '';
 end
 
 %% produce figure
-figure('name',lbl.setText.titleText,'numbertitle','off'); hold on 
+figure('name',lbl.setText.titleText,'numbertitle','off'); hold on
 for iSess = 1:nrSess
+    nrSub = size(data{iSess},1);
+    thisCond = size(data{iSess},2);
+     xPos = allXpos{iSess};
     % create jitter
     sizeX = ones(nrSub,1);
-    thisX = jitterRandX(sizeX,iSess,u/2);
-    thisX = [thisX+xPos(1) thisX+xPos(2)];
+    baseX = jitterRandX(sizeX,iSess,u/2);
+    thisX = zeros(nrSub,thisCond);
+    for iCond =1:thisCond
+        thisX(:,iCond)=baseX+xPos(iCond);
+    end
     
-    if sets.lines
+    if sets.lines&&thisCond>1
         plot(thisX',...
             [data{iSess}'],'-','Color',sets.colorScatter)
     end
     
-    for iCond = 1:nrCond
+    for iCond = 1:thisCond
+        nrSub = size(data{iSess},1);
         currentColor = sets.colorSpec{iSess}(iCond,:);
         
-        % draw bars 
-        h1(iSess)=bar(iSess+xPos(iCond),meanData{iSess}(iCond),width,...
+        % draw bars
+        h1(iSess,iCond)=bar(iSess+xPos(iCond),meanData{iSess}(iCond),width,...
             'EdgeColor',currentColor,'FaceColor',currentColor);
+        
 
-        % draw datapoints
-        plot(thisX(:,iCond),data{iSess}(:,iCond),'o', ...
-            'MarkerEdgeColor',currentColor,...
-            'MarkerFaceColor',sets.colorScatter)
-
-        % draw errorbars
-        errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
+        if nrSub>1
+            % draw datapoints
+            plot(thisX(:,iCond),data{iSess}(:,iCond),'o', ...
+                'MarkerEdgeColor',currentColor,...
+                'MarkerFaceColor',sets.colorScatter)
+            
+            % draw errorbars
+            errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
+        end
+        
+        if any(strcmp('manualSEM',fieldnames(sets)))
+            % draw errorbars
+            errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
+        end
     end
 end
 
@@ -121,6 +187,7 @@ set(gca,'XTick',xTickSpots)
 set(gca,'XTickLabel',[lbl.setText.xLabels lbl.setText.xLabels])
 lbl.Xtick = get(gca,'XTickLabel');
 lbl.hYLabel = ylabel(lbl.setText.hYLabel);
+lbl.hXLabel = xlabel(lbl.setText.hXLabel);
 lbl.hTitle = title(lbl.setText.titleText);
 
 % limit xaxis in a pretty way
@@ -142,5 +209,5 @@ end
 end
 
 function randX = jitterRandX(X,meanX,width)
-    randX = (rand(size(X))-0.5)*2*width+meanX;
+randX = (rand(size(X))-0.5)*2*width+meanX;
 end
