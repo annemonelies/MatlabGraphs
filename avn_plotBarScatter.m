@@ -72,6 +72,7 @@ if ~any(strcmp('colorSpec',fieldnames(sets)))
             sets.colorSpec{iSess} = repmat(colorOptions(iSess,:),nrCond,1);
         end
     else
+        nrCond = nrCondperSess(1);
         for iCond = 1:nrCond
             sets.colorSpec{1}(iCond,:) = colorOptions(iCond,:);
         end
