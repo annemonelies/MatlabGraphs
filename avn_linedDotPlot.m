@@ -45,6 +45,20 @@ nrOfX = min(dimX);
 nrOfY = min(dimY);
 maxNrXY = max(nrOfX,nrOfY);
 
+% adjust axis according to maximum/minum values of x and y
+maxX = max(max(xValues));
+minX = min(min(xValues));
+diffX = maxX - minX;
+
+mnX = minX-0.1*diffX;
+mxX = maxX+0.1*diffX;
+
+maxY = max(max(yValues));
+minY = min(min(yValues));
+diffY = maxY - minY;
+mnY = minY-0.1*diffY;
+mxY = maxY+0.1*diffY;
+
 %% process all possible label input
 if any(strcmp('yValues',fieldnames(label)))
     lbl.yValues= label.yValues;
@@ -126,8 +140,14 @@ for iLine = 1:maxNrXY
         % if one maxtrix (but not the other) has only one parameter 
         % matrix (min size ==1), use the same parameter for all paramater
         % of the other matrix.
-        if nrOfX==1; iLineX = 1; end;
-        if nrOfY==1; iLineY = 1; end;
+        if nrOfX==1; 
+            iLineX = 1; 
+            iLineY = iLine;
+        end
+        if nrOfY==1; 
+            iLineY = 1; 
+            iLineX = iLine;
+        end;
     else
         error('Matrixes do not have an equal number of variables, input matrixes need to have equal variables, or one needs to be a vector')
     end
@@ -145,19 +165,7 @@ for iLine = 1:maxNrXY
         y = yValues(iLineY,:)';
     end
     
-    % adjust axis according to maximum/minum values of x and y
-    maxX = max(x);
-    minX = min(x);
-    diffX = maxX - minX;
-    
-    mnX = minX-0.1*diffX;
-    mxX = maxX+0.1*diffX;
-    
-    maxY = max(y);
-    minY = min(y);
-    diffY = maxY - minY;
-    mnY = minY-0.1*diffY;
-    mxY = maxY+0.1*diffY;
+
     
     % overrule axis minimun values, and set to 0 (if variable mn0 is set)
     if lbl.mn0

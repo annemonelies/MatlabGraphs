@@ -39,11 +39,25 @@ function lbl = avn_linedDotPlot(xValues,yValues,label)
 
 %%
 % determine size of input values
-sizeX = size(xValues);
-sizeY = size(yValues);
-nrOfX = min(sizeX);
-nrOfY = min(sizeY);
+dimX = size(xValues);
+dimY = size(yValues);
+nrOfX = min(dimX);
+nrOfY = min(dimY);
 maxNrXY = max(nrOfX,nrOfY);
+
+    % adjust axis according to maximum/minum values of x and y
+    maxX = max(xValues);
+    minX = min(x);
+    diffX = maxX - minX;
+    
+    mnX = minX-0.1*diffX;
+    mxX = maxX+0.1*diffX;
+    
+    maxY = max(y);
+    minY = min(y);
+    diffY = maxY - minY;
+    mnY = minY-0.1*diffY;
+    mxY = maxY+0.1*diffY;
 
 %% process all possible label input
 if any(strcmp('yValues',fieldnames(label)))
@@ -65,9 +79,13 @@ else
 end
 
 if any(strcmp('lineColor',fieldnames(label)))
+    if iscell(label.dotColor);
     lbl.lineColor = label.lineColor;
+    else
+        lbl.lineColor = {label.lineColor};
+    end
 else
-    lbl.lineColor= {'r','m','k'};
+    lbl.lineColor= {'r','k','m'};
 end
 
 if any(strcmp('showStat',fieldnames(label)))
@@ -77,9 +95,13 @@ else
 end
 
 if any(strcmp('dotColor',fieldnames(label)))
+    if iscell(label.dotColor);
     lbl.dotColor = label.dotColor;
+    else
+        lbl.dotColor = {label.dotColor};
+    end
 else
-    lbl.dotColor= 'b';
+    lbl.dotColor= {'b','k','m'};
 end
 
 if any(strcmp('dotShape',fieldnames(label)))
@@ -111,45 +133,39 @@ figure; hold on
 for iLine = 1:maxNrXY
     
     % select the right inputline
-    if sizeX==sizeY
+    if nrOfX==nrOfY
         iLineX = iLine;
         iLineY = iLine;
-    elseif sizeX==1||sizeY==1 
+    elseif nrOfX==1||nrOfY==1 
         % if one maxtrix (but not the other) has only one parameter 
         % matrix (min size ==1), use the same parameter for all paramater
         % of the other matrix.
-        if sizeX==1; iLineX = 1; end;
-        if sizeY==1; iLineY = 1; end;
+        if nrOfX==1; 
+            iLineX = 1; 
+            iLineY = iLine;
+        end
+        if nrOfY==1; 
+            iLineY = 1; 
+            iLineX = iLine;
+        end;
     else
         error('Matrixes do not have an equal number of variables, input matrixes need to have equal variables, or one needs to be a vector')
     end
     
     % make sure the orrientation of the input is always in the right way
-    if sizeX(2)==nrOfX
+    if dimX(2)==nrOfX
         x = xValues(:,iLineX);
-    elseif sizeX(1)==nrOfX
+    elseif dimX(1)==nrOfX
         x = xValues(iLineX,:)';
     end
     
-    if sizeY(2)==nrOfY
+    if dimY(2)==nrOfY
         y = yValues(:,iLineY);
-    elseif sizeY(1)==nrOfX
+    elseif dimY(1)==nrOfX
         y = yValues(iLineY,:)';
     end
     
-    % adjust axis according to maximum/minum values of x and y
-    maxX = max(x);
-    minX = min(x);
-    diffX = maxX - minX;
-    
-    mnX = minX-0.1*diffX;
-    mxX = maxX+0.1*diffX;
-    
-    maxY = max(y);
-    minY = min(y);
-    diffY = maxY - minY;
-    mnY = minY-0.1*diffY;
-    mxY = maxY+0.1*diffY;
+
     
     % overrule axis minimun values, and set to 0 (if variable mn0 is set)
     if lbl.mn0
@@ -179,9 +195,11 @@ for iLine = 1:maxNrXY
     % else
     %     lineshape = '-';
     % end
-    lbl.lineColor = lineColorlbl.lineColor
+    
     lineshape = '-';  % temporary overruled as always a solid line
-    lineStyle = [lineshape lbl.lineColor];
+    curLineColor = lbl.lineColor{iLine};
+    curDotColor = lbl.dotColor{iLine};
+    lineStyle = [lineshape curLineColor];
     
     %% make figure
     
@@ -192,7 +210,7 @@ for iLine = 1:maxNrXY
     ylim(sizeY);
     
     % plot dots and line
-    plot(x,y,[lbl.dotColor,lbl.dotForm],'MarkerSize',lbl.dotSize)
+    plot(x,y,[curDotColor,lbl.dotForm],'MarkerSize',lbl.dotSize)
     plot(x,B(1)+B(2)*x,lineStyle,'LineWidth',2);
     
     % set labelnames and title
@@ -202,7 +220,7 @@ for iLine = 1:maxNrXY
     
     % set statistics (if showstats is set to true)
     if lbl.showStat
-        text((sizeX(1)+(sizeX(2)-sizeX(1))*0.15),(sizeY(2)-(sizeY(2)-sizeY(1))*0.15*maxNrXY),...
+        text((sizeX(1)+(sizeX(2)-sizeX(1))*0.15),(sizeY(2)-(sizeY(2)-sizeY(1))*0.15*iLine),...
             sprintf('p:%.2f',stats.p(2)),'Color','red','FontSize',10);
     end
     
