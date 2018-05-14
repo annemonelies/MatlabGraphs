@@ -39,7 +39,7 @@ lbl.random = 1;
 lbl.setText.random = 1;
 
 if ~any(strcmp('titleText',fieldnames(lbl.setText)))
-   lbl.setText.titleText = 'title';
+    lbl.setText.titleText = 'title';
 end
 
 if ~any(strcmp('lines',fieldnames(sets)))
@@ -58,7 +58,7 @@ end
 
 % determine size dataset
 nrSess = size(data,2);
-for iSess = 1:nrSess 
+for iSess = 1:nrSess
     nrCondperSess(iSess) = size(data{iSess},2);
 end
 nrSub = size(data{1},1);
@@ -81,21 +81,21 @@ end
 
 
 for iSess = 1:nrSess
-% calculate spacing (x-position bars, width of bars)
-nrCond = nrCondperSess(iSess);
-u = 1/(1+nrCond*4);
-xPos = [];
-x = -0.5;
-for iCond = 1:nrCond
-    if iCond ==1
-        x = x+2.5*u;
-    else
-        x = x+4*u;
+    % calculate spacing (x-position bars, width of bars)
+    nrCond = nrCondperSess(iSess);
+    u = 1/(1+nrCond*4);
+    xPos = [];
+    x = -0.5;
+    for iCond = 1:nrCond
+        if iCond ==1
+            x = x+2.5*u;
+        else
+            x = x+4*u;
+        end
+        xPos(iCond) = x;
     end
-    xPos(iCond) = x;
-end
-allXpos{iSess} = xPos;
-allU(iSess) = u;
+    allXpos{iSess} = xPos;
+    allU(iSess) = u;
 end
 uMin = min(allU);
 width = uMin*3;
@@ -140,10 +140,11 @@ end
 
 %% produce figure
 figure('name',lbl.setText.titleText,'numbertitle','off'); hold on
+xlim([0.5 nrSess+0.5])
 for iSess = 1:nrSess
     nrSub = size(data{iSess},1);
     thisCond = size(data{iSess},2);
-     xPos = allXpos{iSess};
+    xPos = allXpos{iSess};
     % create jitter
     sizeX = ones(nrSub,1);
     baseX = jitterRandX(sizeX,iSess,u/2);
@@ -162,24 +163,32 @@ for iSess = 1:nrSess
         currentColor = sets.colorSpec{iSess}(iCond,:);
         
         % draw bars
+        
         h1(iSess,iCond)=bar(iSess+xPos(iCond),meanData{iSess}(iCond),width,...
             'EdgeColor',currentColor,'FaceColor',currentColor);
         
-
+        
         if nrSub>1
             % draw datapoints
             plot(thisX(:,iCond),data{iSess}(:,iCond),'o', ...
                 'MarkerEdgeColor',currentColor,...
                 'MarkerFaceColor',sets.colorScatter)
             
-            % draw errorbars
-            errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
+            
         end
-        
-        if any(strcmp('manualSEM',fieldnames(sets)))
-            % draw errorbars
-            errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
-        end
+    end
+end
+
+for iSess = 1:nrSess
+    xPos = allXpos{iSess};
+    
+    % draw errorbars
+    errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
+    
+    
+    if any(strcmp('manualSEM',fieldnames(sets)))
+        % draw errorbars
+        errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
     end
 end
 
