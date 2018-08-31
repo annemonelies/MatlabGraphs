@@ -127,8 +127,11 @@ end
 
 
 %% produce figure
-
-figure; hold on
+if ~any(strcmp('figHdl',fieldnames(label)))
+    figure; hold on
+else
+    
+end
 
 for iLine = 1:maxNrXY
     

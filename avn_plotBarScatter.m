@@ -50,7 +50,7 @@ if ~any(strcmp('colorScatter',fieldnames(sets)))
     sets.colorScatter = [0.6,0.6,0.6];
 end
 
-if ~iscell(inData);
+if ~iscell(inData)
     data{1} = inData;
 else
     data = inData;
@@ -127,7 +127,7 @@ else
 end
 
 if ~any(strcmp('xLabels',fieldnames(lbl.setText)))
-    lbl.setText.xLabels = [1:nrSess];
+    lbl.setText.xLabels = [1:nrCond];
 end
 
 if ~any(strcmp('hYLabel',fieldnames(lbl.setText)))
@@ -181,14 +181,18 @@ end
 
 for iSess = 1:nrSess
     xPos = allXpos{iSess};
+    thisCond = size(data{iSess},2);
     
-    % draw errorbars
-    errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
-    
-    
-    if any(strcmp('manualSEM',fieldnames(sets)))
+    for iCond =1:thisCond
         % draw errorbars
         errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
+        
+        
+        if any(strcmp('manualSEM',fieldnames(sets)))
+            % draw errorbars
+            errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
+        end
+        
     end
 end
 
@@ -212,7 +216,7 @@ if any(strcmp('legend',fieldnames(lbl.setText)))
     if any(strcmp('legendLocation',fieldnames(lbl)))
         legend(h1,lbl.setText.legend,'location',lbl.legendLocation)
     else
-        legend(h1,lbl.setText.legend)
+        legend(h1(:,1),lbl.setText.legend)
     end
 end
 
