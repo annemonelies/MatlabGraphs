@@ -23,12 +23,20 @@ function [lbl, h1] = avn_plotBarScatter(inData,lbl)
 %  - lbl.yAxis (limit the yAxis, use standard [y,y] config)
 %  - lbl.setText.legend (introduce legend, by specifying legendNames)
 %  - lbl.legendLocation (mark location by standard use, e.g. 'northeast')
-%
-% optinal lbl input:
 %  - lbl.lines (True/False(=default), lines between scatterpoints in colums)
 %  - lbl.colorScatter (format [0 0 0] , lbl color of scatterpoints)
 %  - lbl.colorSpec (set your own colors using {[0 0 0;0 0 0],[0 0 0;0 0 0]} for each
 %  colum a triplit on a new line, for each session a new cell.
+%
+%   ** New: BEESCATTER SUPPORT **
+%   You can now also scatter your points in respect to point-density:
+%   - lbl.setBee = true;  or 
+%   - lbl.Bee.bin = [insert number of bins];
+%   I recommend to play around with the number of bins for best results.
+%   Standard number of bins is set to 1/3 of your nr of subjects (rounded
+%   down). IMPORTANT: lbl.lines is OVERRULED as the line angle is no longer
+%   informative.
+%
 % % Note: Remove spm from path because of conflict with nanvar and nanmean
 % Annelies van Nuland - 07/07/2016
 
@@ -125,6 +133,60 @@ else
     end
 end
 
+%% Bee distribution check and implement
+if or(any(strcmp('Bee',fieldnames(lbl))),any(strcmp('setBee',fieldnames(lbl))))
+    lbl.setBee = true;
+    lbl.Bee.set = true;
+    for makeBeeScatter =1
+        if ~any(strcmp('bins',fieldnames(lbl.Bee)))
+            lbl.Bee.bins = floor(nrSub/3);
+        end
+        % transform data to one giant matrix structure (bee style)
+        beeData = cell2mat(data);
+        beeXpos = cell2mat(allXpos);
+        xposBar = nan(size(beeData));
+        
+        % determine dimensions of plot
+        nrBars = size(beeData,2);
+        BmxY = max(max(beeData));
+        BmnY = min(min(beeData));
+        binYindex =linspace(BmnY,BmxY,lbl.Bee.bins); % bin indexes
+        [nThickFL, ixBFL] = histc(beeData,binYindex); % nr points in each bin
+        nThick = flipud(nThickFL); % nr points in each bin
+        ixB = (ixBFL-lbl.Bee.bins-1)*-1;
+        BmaxBin = max(max(nThick));
+        
+        % set your maximum width a bee plot can have
+        if BmaxBin>nrSub/3
+            % if data is extremely centred - allow a little wider (it's very
+            % likely that this would not be the case in all your measures,
+            % and represents an extreme. Now other bins looks 'normal' size,
+            % while your extreme looks extreme).
+            BmxX = width+u;
+        else
+            BmxX = width;
+        end
+        
+        % determine location of points based on bee-bin-width
+        for iBar = 1:nrBars
+            for iBin = 1:lbl.Bee.bins
+                if nThick(iBin,iBar)>0
+                    binNum = nThick(iBin,iBar);
+                    binWidth = BmxX*binNum/BmaxBin;
+                    xposBin = linspace((beeXpos(iBar)-binWidth/2),(beeXpos(iBar)+binWidth/2),binNum);
+                    if binNum>3
+                        xposBin = xposBin(randperm(length(xposBin)));
+                    end
+                    xposBar(ixB(:,iBar)==iBin,iBar) = xposBin;
+                end
+            end
+        end
+    end
+else
+    lbl.setBee = false;
+end
+
+%%
 if ~any(strcmp('xLabels',fieldnames(lbl.setText)))
     lbl.setText.xLabels = [1:nrCond];
 end
@@ -142,6 +204,7 @@ if ~any(strcmp('handle',fieldnames(lbl)))
     figure('name',lbl.setText.titleText,'numbertitle','off'); hold on
 end
 
+ixB = 1;
 xlim([0.5 nrSess+0.5])
 for iSess = 1:nrSess
     nrSub = size(data{iSess},1);
@@ -149,15 +212,20 @@ for iSess = 1:nrSess
     xPos = allXpos{iSess};
     % create jitter
     sizeX = ones(nrSub,1);
-    baseX = jitterRandX(sizeX,iSess,u/2);
-    thisX = zeros(nrSub,thisCond);
-    for iCond =1:thisCond
-        thisX(:,iCond)=baseX+xPos(iCond);
-    end
-    
-    if lbl.lines&&thisCond>1
-        plot(thisX',...
-            [data{iSess}'],'-','Color',lbl.colorScatter)
+    if ~lbl.setBee
+        baseX = jitterRandX(sizeX,iSess,u/2);
+        thisX = zeros(nrSub,thisCond);
+        for iCond =1:thisCond
+            thisX(:,iCond)=baseX+xPos(iCond);
+        end
+        
+        if lbl.lines&&thisCond>1
+            plot(thisX',...
+                [data{iSess}'],'-','Color',lbl.colorScatter)
+        end
+    else
+        thisX = xposBar(:,ixB:(thisCond+ixB-1))+1;
+        ixB = thisCond+ixB;
     end
     
     for iCond = 1:thisCond
@@ -165,18 +233,14 @@ for iSess = 1:nrSess
         currentColor = lbl.colorSpec{iSess}(iCond,:);
         
         % draw bars
-        
         h1(iSess,iCond)=bar(iSess+xPos(iCond),meanData{iSess}(iCond),width,...
             'EdgeColor',currentColor,'FaceColor',currentColor);
-        
         
         if nrSub>1
             % draw datapoints
             plot(thisX(:,iCond),data{iSess}(:,iCond),'o', ...
                 'MarkerEdgeColor',currentColor,...
                 'MarkerFaceColor',lbl.colorScatter)
-            
-            
         end
     end
 end
@@ -188,7 +252,6 @@ for iSess = 1:nrSess
     for iCond =1:thisCond
         % draw errorbars
         errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
-        
         
         if any(strcmp('manualSEM',fieldnames(lbl)))
             % draw errorbars
