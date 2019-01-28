@@ -1,5 +1,5 @@
-function [lbl, h1] = avn_plotBarScatter(inData,lbl,sets)
-% function lbl = plotBarScatLine(data,lbl,sets)
+function [lbl, h1] = avn_plotBarScatter(inData,lbl)
+% function lbl = plotBarScatLine(data,lbl,lbl)
 % Creates plot which include (groups of) bars, the induvidual data points
 % which are scattered with a slight jitter (relative to bar-thickness)
 % and can include lines between jitter-points if specified.
@@ -24,17 +24,16 @@ function [lbl, h1] = avn_plotBarScatter(inData,lbl,sets)
 %  - lbl.setText.legend (introduce legend, by specifying legendNames)
 %  - lbl.legendLocation (mark location by standard use, e.g. 'northeast')
 %
-% optinal sets input:
-%  - sets.lines (True/False(=default), lines between scatterpoints in colums)
-%  - sets.colorScatter (format [0 0 0] , sets color of scatterpoints)
-%  - sets.colorSpec (set your own colors using {[0 0 0;0 0 0],[0 0 0;0 0 0]} for each
+% optinal lbl input:
+%  - lbl.lines (True/False(=default), lines between scatterpoints in colums)
+%  - lbl.colorScatter (format [0 0 0] , lbl color of scatterpoints)
+%  - lbl.colorSpec (set your own colors using {[0 0 0;0 0 0],[0 0 0;0 0 0]} for each
 %  colum a triplit on a new line, for each session a new cell.
 % % Note: Remove spm from path because of conflict with nanvar and nanmean
 % Annelies van Nuland - 07/07/2016
 
 %% basic setup
 % Set baseline variables if not given
-sets.random = 1;
 lbl.random = 1;
 lbl.setText.random = 1;
 
@@ -42,12 +41,12 @@ if ~any(strcmp('titleText',fieldnames(lbl.setText)))
     lbl.setText.titleText = 'title';
 end
 
-if ~any(strcmp('lines',fieldnames(sets)))
-    sets.lines=false;
+if ~any(strcmp('lines',fieldnames(lbl)))
+    lbl.lines=false;
 end
 
-if ~any(strcmp('colorScatter',fieldnames(sets)))
-    sets.colorScatter = [0.6,0.6,0.6];
+if ~any(strcmp('colorScatter',fieldnames(lbl)))
+    lbl.colorScatter = [0.6,0.6,0.6];
 end
 
 if ~iscell(inData)
@@ -64,17 +63,17 @@ end
 nrSub = size(data{1},1);
 
 % prepare some default colorscheme in the right format
-if ~any(strcmp('colorSpec',fieldnames(sets)))
+if ~any(strcmp('colorSpec',fieldnames(lbl)))
     colorOptions = colormap('lines');
     if nrSess>1
         for iSess = 1:nrSess
             nrCond = nrCondperSess(iSess);
-            sets.colorSpec{iSess} = repmat(colorOptions(iSess,:),nrCond,1);
+            lbl.colorSpec{iSess} = repmat(colorOptions(iSess,:),nrCond,1);
         end
     else
         nrCond = nrCondperSess(1);
         for iCond = 1:nrCond
-            sets.colorSpec{1}(iCond,:) = colorOptions(iCond,:);
+            lbl.colorSpec{1}(iCond,:) = colorOptions(iCond,:);
         end
     end
 end
@@ -121,8 +120,8 @@ if nrSub>1
     end
 else
     meanData{iSess} = data{iSess};
-    if any(strcmp('manualSEM',fieldnames(sets)))
-        semData{iSess} = sets.manualSEM{iSess};
+    if any(strcmp('manualSEM',fieldnames(lbl)))
+        semData{iSess} = lbl.manualSEM{iSess};
     end
 end
 
@@ -139,7 +138,10 @@ if ~any(strcmp('hXLabel',fieldnames(lbl.setText)))
 end
 
 %% produce figure
-figure('name',lbl.setText.titleText,'numbertitle','off'); hold on
+if ~any(strcmp('handle',fieldnames(lbl)))
+    figure('name',lbl.setText.titleText,'numbertitle','off'); hold on
+end
+
 xlim([0.5 nrSess+0.5])
 for iSess = 1:nrSess
     nrSub = size(data{iSess},1);
@@ -153,14 +155,14 @@ for iSess = 1:nrSess
         thisX(:,iCond)=baseX+xPos(iCond);
     end
     
-    if sets.lines&&thisCond>1
+    if lbl.lines&&thisCond>1
         plot(thisX',...
-            [data{iSess}'],'-','Color',sets.colorScatter)
+            [data{iSess}'],'-','Color',lbl.colorScatter)
     end
     
     for iCond = 1:thisCond
         nrSub = size(data{iSess},1);
-        currentColor = sets.colorSpec{iSess}(iCond,:);
+        currentColor = lbl.colorSpec{iSess}(iCond,:);
         
         % draw bars
         
@@ -172,7 +174,7 @@ for iSess = 1:nrSess
             % draw datapoints
             plot(thisX(:,iCond),data{iSess}(:,iCond),'o', ...
                 'MarkerEdgeColor',currentColor,...
-                'MarkerFaceColor',sets.colorScatter)
+                'MarkerFaceColor',lbl.colorScatter)
             
             
         end
@@ -188,7 +190,7 @@ for iSess = 1:nrSess
         errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
         
         
-        if any(strcmp('manualSEM',fieldnames(sets)))
+        if any(strcmp('manualSEM',fieldnames(lbl)))
             % draw errorbars
             errorbar(iSess+xPos(iCond),meanData{iSess}(iCond),semData{iSess}(iCond),'k.','LineWidth',2)
         end

@@ -59,6 +59,8 @@ diffY = maxY - minY;
 mnY = minY-0.1*diffY;
 mxY = maxY+0.1*diffY;
 
+label.random = 1;
+
 %% process all possible label input
 if any(strcmp('yValues',fieldnames(label)))
     lbl.yValues= label.yValues;
@@ -79,13 +81,31 @@ else
 end
 
 if any(strcmp('lineColor',fieldnames(label)))
-    if iscell(label.dotColor);
+    if iscell(label.dotColor)
     lbl.lineColor = label.lineColor;
     else
         lbl.lineColor = {label.lineColor};
     end
 else
-    lbl.lineColor= {'r','k','m'};
+    if maxNrXY==1
+        lbl.lineColor= {'r'};
+    else
+        lbl.lineColor= {'b','k','m','r'};
+    end
+end
+
+if any(strcmp('dotColor',fieldnames(label)))
+    if iscell(label.dotColor)
+    lbl.dotColor = label.dotColor;
+    else
+        lbl.dotColor = {label.dotColor};
+    end
+else
+    if maxNrXY==1
+        lbl.dotColor= {'b'};
+    else
+        lbl.dotColor= {'b','k','m','r'};
+    end
 end
 
 if any(strcmp('showStat',fieldnames(label)))
@@ -94,15 +114,6 @@ else
     lbl.showStat= true;
 end
 
-if any(strcmp('dotColor',fieldnames(label)))
-    if iscell(label.dotColor);
-    lbl.dotColor = label.dotColor;
-    else
-        lbl.dotColor = {label.dotColor};
-    end
-else
-    lbl.dotColor= {'b','k','m'};
-end
 
 if any(strcmp('dotShape',fieldnames(label)))
     label.dotShape= label.dotShape;
@@ -143,11 +154,11 @@ for iLine = 1:maxNrXY
         % if one maxtrix (but not the other) has only one parameter 
         % matrix (min size ==1), use the same parameter for all paramater
         % of the other matrix.
-        if nrOfX==1; 
+        if nrOfX==1
             iLineX = 1; 
             iLineY = iLine;
         end
-        if nrOfY==1; 
+        if nrOfY==1
             iLineY = 1; 
             iLineX = iLine;
         end;
@@ -223,8 +234,9 @@ for iLine = 1:maxNrXY
     
     % set statistics (if showstats is set to true)
     if lbl.showStat
+        
         text((sizeX(1)+(sizeX(2)-sizeX(1))*0.15),(sizeY(2)-(sizeY(2)-sizeY(1))*0.15*iLine),...
-            sprintf('p:%.2f',stats.p(2)),'Color','red','FontSize',10);
+            sprintf('p:%.3f',stats.p(2)),'Color',lbl.lineColor{iLine},'FontSize',10);
     end
     
 end
