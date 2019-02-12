@@ -57,6 +57,7 @@ if ~any(strcmp('colorScatter',fieldnames(lbl)))
     lbl.colorScatter = [0.6,0.6,0.6];
 end
 
+
 if ~iscell(inData)
     data{1} = inData;
 else
@@ -127,9 +128,11 @@ if nrSub>1
         end
     end
 else
-    meanData{iSess} = data{iSess};
-    if any(strcmp('manualSEM',fieldnames(lbl)))
-        semData{iSess} = lbl.manualSEM{iSess};
+    for iSess = 1:nrSess
+        meanData{iSess} = data{iSess};
+        if any(strcmp('manualSEM',fieldnames(lbl)))
+            semData{iSess} = lbl.manualSEM{iSess};
+        end
     end
 end
 
@@ -165,6 +168,10 @@ if or(any(strcmp('Bee',fieldnames(lbl))),any(strcmp('setBee',fieldnames(lbl))))
             BmxX = width+u;
         else
             BmxX = width;
+        end
+        
+        if any(strcmp('width',fieldnames(lbl.Bee)))
+            BmxX = BmxX * lbl.Bee.width;
         end
         
         % determine location of points based on bee-bin-width
@@ -204,11 +211,11 @@ if ~any(strcmp('handle',fieldnames(lbl)))
     figure('name',lbl.setText.titleText,'numbertitle','off'); hold on
 end
 
-ixB = 1;
+
 xlim([0.5 nrSess+0.5])
 for iSess = 1:nrSess
     nrSub = size(data{iSess},1);
-    thisCond = size(data{iSess},2);
+    thisCond = nrCondperSess(iSess);
     xPos = allXpos{iSess};
     % create jitter
     sizeX = ones(nrSub,1);
@@ -224,8 +231,11 @@ for iSess = 1:nrSess
                 [data{iSess}'],'-','Color',lbl.colorScatter)
         end
     else
-        thisX = xposBar(:,ixB:(thisCond+ixB-1))+1;
-        ixB = thisCond+ixB;
+        if iSess == 1
+            thisX = xposBar(:,1:(sum(nrCondperSess(1:iSess))))+iSess;
+        else
+            thisX = xposBar(:,sum(nrCondperSess(1:iSess-1))+1:sum(nrCondperSess(1:iSess)))+iSess;
+        end
     end
     
     for iCond = 1:thisCond
@@ -238,9 +248,16 @@ for iSess = 1:nrSess
         
         if nrSub>1
             % draw datapoints
-            plot(thisX(:,iCond),data{iSess}(:,iCond),'o', ...
-                'MarkerEdgeColor',currentColor,...
-                'MarkerFaceColor',lbl.colorScatter)
+            if any(strcmp('MarkerSize',fieldnames(lbl)))
+                plot(thisX(:,iCond),data{iSess}(:,iCond),'o', ...
+                    'MarkerEdgeColor',currentColor,...
+                    'MarkerFaceColor',lbl.colorScatter,...
+                    'MarkerSize',lbl.MarkerSize)
+            else
+                plot(thisX(:,iCond),data{iSess}(:,iCond),'o', ...
+                    'MarkerEdgeColor',currentColor,...
+                    'MarkerFaceColor',lbl.colorScatter)
+            end
         end
     end
 end
